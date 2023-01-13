@@ -39,10 +39,7 @@ def escape(galaxy, fuel):
     # g [[Star]]
     g = make_galaxy(galaxy)
 
-    #if check_right_side(g,fuel):
-    #    return "ESCAPED" 
-
-
+    
     path_fuel = 0
     spent_fuel = 0
     index = 0
@@ -50,25 +47,21 @@ def escape(galaxy, fuel):
 
     
     breadcrumbs = [] # store the indexes per layer
-    star_choices = [] # store the choice made
+   
     path_found = False
     previous_layer = False
     go_back = 0
+    go_back_temp = 0
+    check_previous = False
 
-    star_choices.append(index)
-    breadcrumbs.append(index)
-    
     while not path_found:
-        
+        breadcrumbs.append(index)
         print(layer,index)
         star = g[layer][index]
         spent_fuel += star.amount_fuel
         if star.stars != []:
             path_fuel,star_choice = star.move() # cost to move to the minimum connected star (amount_fuel, star_idx)
-            if spent_fuel + path_fuel < fuel:
-                star_choices.append(star_choice)
-            
-        
+           
         if spent_fuel + path_fuel < fuel and star.stars == []:
             path_found = True
             index = index + star_choice
@@ -78,40 +71,46 @@ def escape(galaxy, fuel):
         if spent_fuel + path_fuel < fuel and star.stars != []:
             layer += 1
             index = index + star_choice
-            breadcrumbs.append(index)
+            #breadcrumbs.append(index)
             continue
        
         if spent_fuel + path_fuel > fuel and (layer,index) not in [(len(g)-1,len(g[-1])-2),(0,0)]:
 
-            print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@",breadcrumbs,star_choices,go_back)
+            print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@",breadcrumbs,go_back)
+            
+            if check_previous:
+                go_back = go_back_temp 
+                check_previous = False
+            else:
+                check_previous = True
+                go_back = 0  
+                
             h = len(breadcrumbs)
             if star.stars != []:
                 go_back = 0
             for i in range(1,3+go_back,1):
                 spent_fuel -= g[h-i][breadcrumbs[-i]].amount_fuel
-           
-            if star_choices[-(2+go_back)] == 0:
-                for i in range(2+go_back):
-                    star_choices.pop(-1)
-                star_choices.append(1)
+            
+            
+            if breadcrumbs[-(2+go_back)] -  breadcrumbs[-(3+go_back)] == 0:
                 index = breadcrumbs[-(2+go_back)] +1 
             else:
-                for i in range(2+go_back):
-                    star_choices.pop(-1)
-                star_choices.append(0)
-                
                 index = breadcrumbs[-(2+go_back)] -1 
             for i in range(2+go_back):
                 breadcrumbs.pop(-1)
-            breadcrumbs.append(index)    
-           
             go_back += 1
+            go_back_temp += 1
             layer -= go_back
             if layer == 1:
                 go_back =0
-            print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@",breadcrumbs,star_choices)    
+                go_back_temp= 0
+                     
+                print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@",breadcrumbs)    
+        elif (layer,index) == (0,0) or check_right_side(g,fuel):
+            return "TRAPPED"   
         else:
             return "TRAPPED"    
+             
 
             
 
@@ -136,7 +135,7 @@ def make_galaxy(fuel_array) -> [[Star]]:
 
         
    
-s = [[15],[2,3],[1,2,3],[1,2,3,4],[50,49,48,1,46]]
+s = [[15],[2,3],[1,2,3],[1,2,3,4],[i for i in range(1,6,1)],[50,1,48,47,46,50]]
 
 
 
